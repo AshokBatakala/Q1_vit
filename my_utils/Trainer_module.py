@@ -135,16 +135,16 @@ class Trainer:
                 epoch_loss += loss.item()
                 epoch_corrects += torch.sum(torch.argmax(outputs,1) == labels.data).item()
 
-            epoch_loss = epoch_loss/len(train_loader.dataset)
-            epoch_acc = epoch_corrects.double()/len(train_loader.dataset)
+            epoch_loss = float(epoch_loss/len(train_loader.dataset) )
+            epoch_acc = float(epoch_corrects.double()/len(train_loader.dataset) )
             log['train_loss'].append(epoch_loss)
             log['train_acc'].append(epoch_acc)
 
             # validation using test function
             if self.val_set is not None:
                 val_log = self.test(self.val_set)
-                log['val_loss'].append(val_log['test_loss'][0])
-                log['val_acc'].append(val_log['test_acc'][0])
+                log['val_loss'].append( float( val_log['test_loss'][0]) )
+                log['val_acc'].append(  float( val_log['test_acc'][0])  )
         
         # store last_train_log 
         self.last_log = log
