@@ -77,7 +77,7 @@ class Trainer:
                 
         # calculate loss and accuracy
         epoch_loss = epoch_loss / len(test_set)
-        epoch_acc = float( epoch_corrects / len(test_set) )
+        epoch_acc = epoch_corrects / len(test_set) 
         
         # add to log
         log['test_loss'].append(epoch_loss)
