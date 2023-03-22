@@ -73,7 +73,7 @@ class Trainer:
             # statistics
             epoch_loss += loss.item()
             _, preds = torch.max(outputs, 1)
-            epoch_corrects += torch.sum(preds == labels.data)
+            epoch_corrects += torch.sum(preds == labels.data).item()
                 
         # calculate loss and accuracy
         epoch_loss = epoch_loss / len(test_set)
