@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 import torch 
 import matplotlib.pyplot as plt
-
+import os
 class Trainer:
     """ Trainer class for training and evaluating models
     usage:
@@ -181,6 +181,22 @@ class Trainer:
             plt.savefig(save_path + filename)
         if show:
             plt.show()
+        
+    def save_model(self,save_path = "model_zoo/",filename = 'model.pth'):
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+        torch.save(self.model.state_dict(),save_path + filename)
+
+    def load_model(self,load_path = "model_zoo/",filename = 'model.pth'):
+       
+        # check file exists
+        if os.path.isfile(load_path + filename):
+            try:
+                self.model.load_state_dict(torch.load(load_path + filename))
+            except:
+                raise ValueError('File not compatible')
+        else:
+            raise ValueError('File not found')
             
 
 

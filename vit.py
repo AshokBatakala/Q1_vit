@@ -228,11 +228,17 @@ class Transformer(nn.Module):
         self.transformer_blocks = nn.Sequential(transformer_blocks)
         
         
-    def forward(self, input: tensor) -> tensor:
-        
-        output = self.transformer_blocks(input)
-        
-        return output
+    def forward(self, input: tensor,return_cls_tokens_after_each_layer=False) -> tensor:
+
+        if return_cls_tokens_after_each_layer:
+            cls_tokens = []
+            for transformer_block in self.transformer_blocks:
+                input = transformer_block(input)
+                cls_tokens.append(input[:,0])
+            return cls_tokens
+        else:
+            return self.transformer_blocks(input)
+
             
 
 # -----------------------vision Transfomer-----------------------
@@ -274,16 +280,37 @@ class visionTransformer(nn.Module):
         self.head = nn.Linear(in_features=token_dim,out_features=n_classes)
         
         
-    def forward(self, input: tensor) -> tensor:
+    def forward(self, input: tensor,return_cls_tokens_after_each_layer=False) -> tensor:
+        """Runs the input through the vision transformer
+        return_cls_tokens_after_each_layer: if True, then returns class tokens after each layer of the transformer. (list of tensors)
+                                        shape = [n_layers, batch_size, token_dim] 
+                                        
+                                            if False, then returns class token after the last layer of the transformer.     
+                                        shape = [batch_size, n_classes]
+
+
+        """
         
         output = self.tokenizer(input)
         output = self.concat_class_token(output)
         output = self.add_position_embedding(output)
-        output = self.transformer(output)
-        output = output[:,0]            # the first token is the class token
-        
-        output = self.head(output)
-        return output
-        
+
+        # to get class tokens after each layer
+        if return_cls_tokens_after_each_layer:
+            output = self.transformer(output,return_cls_tokens_after_each_layer=return_cls_tokens_after_each_layer) 
+            output = torch.stack(output,dim=1)
+            output = self.head(output) #
+
+            # change them back to list
+            output = output.split(1,dim=1)
+            output = [tensor.squeeze(1) for tensor in output]
+            return output # shape = [n_layers, batch_size, n_classes]
+        else:
+            # to get class token after the last layer only
+            output = self.transformer(output)
+            output = output[:,0]            # the first token is the class token
+            output = self.head(output)
+            return output  # shape = [batch_size, n_classes]
+
         
         
