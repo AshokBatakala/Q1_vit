@@ -152,7 +152,10 @@ class Trainer:
             return log
 
 
-    def plot(self,log = None,figsize = (20,10),save_path = None,title = None,show = True,filename = 'plot.png'):
+    def plot(self,log = None,figsize = (10,5),save_path = None,title = None,show = True,filename = 'plot.png'):
+        """ saving : it uses savepath + filename
+        so save_path should end with '/'
+        """ 
         if log is None:
             log = self.last_log
 
