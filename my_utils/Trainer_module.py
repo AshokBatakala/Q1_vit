@@ -133,7 +133,7 @@ class Trainer:
                 optimizer.step()
 
                 epoch_loss += loss.item()
-                epoch_corrects += torch.sum(torch.argmax(outputs,1) == labels.data)
+                epoch_corrects += torch.sum(torch.argmax(outputs,1) == labels.data).item()
 
             epoch_loss = epoch_loss/len(train_loader.dataset)
             epoch_acc = epoch_corrects.double()/len(train_loader.dataset)
