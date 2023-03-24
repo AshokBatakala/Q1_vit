@@ -2,6 +2,8 @@ from torch.utils.data import DataLoader
 import torch 
 import matplotlib.pyplot as plt
 import os
+from tqdm import tqdm
+import pandas as pd
 class Trainer:
     """ Trainer class for training and evaluating models
     usage:
@@ -10,7 +12,17 @@ class Trainer:
     trainer.plot() # plot training and validation metrics
     trainer.test() # it returns the log
     """
-    def __init__(self,model,optimizer,criterion,train_set = None,val_set = None,test_set = None,device = None,batch_size = 32,shuffle=True,num_workers=2):
+    def __init__(self,model,
+                 optimizer,
+                 criterion,
+                 train_set = None,
+                 val_set = None,
+                 test_set = None,
+                 device = None,
+                 batch_size = 128,
+                 shuffle=True,
+                 num_workers=4,
+                 ):
 
         self.model = model
         self.optimizer = optimizer
@@ -21,7 +33,7 @@ class Trainer:
         self.test_set = test_set
 
         if device is None:
-            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # to muse all available gpus use 'cuda'
         else:
             self.device = device
 
@@ -85,7 +97,7 @@ class Trainer:
         
         return log
 
-    def train(self,n_epochs = 10,return_log = False):
+    def train(self,n_epochs = 10,return_log = False,verbose=True,callbacks = None):
         """ training function
         
         Args:
@@ -140,11 +152,23 @@ class Trainer:
             log['train_loss'].append(epoch_loss)
             log['train_acc'].append(epoch_acc)
 
+            #print to  console. only 3 digits
+            if verbose:
+                print(f'epoch: {epoch}, train_loss: {epoch_loss:.3f}, train_acc: {epoch_acc:.3f}')
+
+
             # validation using test function
             if self.val_set is not None:
                 val_log = self.test(self.val_set)
                 log['val_loss'].append( float( val_log['test_loss'][0]) )
                 log['val_acc'].append(  float( val_log['test_acc'][0])  )
+                if verbose:
+                    print(f'epoch: {epoch}, val_loss: {val_log["test_loss"][0]:.3f}, val_acc: {val_log["test_acc"][0]:.3f}')
+
+            # callbacks
+            if callbacks is not None:
+                for callback in callbacks:
+                    callback(model)
         
         # store last_train_log 
         self.last_log = log
@@ -152,12 +176,15 @@ class Trainer:
             return log
 
 
-    def plot(self,log = None,figsize = (10,5),save_path = None,title = None,show = True,filename = 'plot.png'):
+    def plot(self,log = None,figsize = (10,5),save_path = None,title = None,show = True,filename = 'plot.png',log_path = None):
         """ saving : it uses savepath + filename
         so save_path should end with '/'
+
+        * also save log as csv file with same name
         """ 
         if log is None:
             log = self.last_log
+
 
         plt.figure(figsize= figsize)
         plt.subplot(1,2,1)
@@ -182,6 +209,10 @@ class Trainer:
             plt.title(title)
         if save_path is not None:
             plt.savefig(save_path + filename)
+            # save log as csv file
+            df = pd.DataFrame(log)
+            df.to_csv(log_path + filename[:-4] + '.csv')
+
         if show:
             plt.show()
         
